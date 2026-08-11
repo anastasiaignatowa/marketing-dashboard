@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>HQC · Маркетинговая отчётность</title>
+<style>
+  :root{
+    --bg:#fcfcfb; --surface:#ffffff; --surface-1:#f5f4f0;
+    --border:#e1e0d9; --border-strong:#c3c2b7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --blue:#2a78d6; --blue-bg:#e6f1fb; --blue-text:#0c447c;
+    --teal:#0f6e56; --teal-bg:#e1f5ee; --teal-text:#085041;
+    --coral:#d85a30; --coral-bg:#faece7; --coral-text:#712b13;
+    --amber:#ba7517; --amber-bg:#faeeda; --amber-text:#633806;
+    --purple:#7f77dd; --purple-bg:#eeedfe; --purple-text:#3c3489;
+    --green:#3b6d11; --green-bg:#eaf3de; --green-text:#27500a;
+    --gray-bg:#f1efe8; --gray-text:#444441;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1140px;margin:0 auto;padding:32px 24px 64px;}
+
+  .period-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:16px;}
+  .period-bar .pl{font-size:12px;color:var(--text-muted);margin-right:4px;}
+  section.report{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;
+    padding:24px 24px 20px;margin-bottom:20px;}
+  .report-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+  .report-head h2{font-size:18px;font-weight:500;margin:0;}
+  .tag{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .tag-blue{background:var(--blue-bg);color:var(--blue-text);}
+  .tag-teal{background:var(--teal-bg);color:var(--teal-text);}
+  .tag-coral{background:var(--coral-bg);color:var(--coral-text);}
+  .tag-amber{background:var(--amber-bg);color:var(--amber-text);}
+  .tag-purple{background:var(--purple-bg);color:var(--purple-text);}
+  .tag-green{background:var(--green-bg);color:var(--green-text);}
+  .tag-gray{background:var(--gray-bg);color:var(--gray-text);}
+  .subhead{font-size:13px;font-weight:500;color:var(--text-secondary);margin:18px 0 10px;}
+  .subhead:first-child{margin-top:0;}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px;
+    align-items:start;}
+  .kpi{background:var(--surface-1);border-radius:8px;padding:12px 14px;}
+  .kpi .l{font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+  .kpi .v{font-size:21px;font-weight:500;}
+  .kpi .d{font-size:12px;margin-top:2px;}
+  .up{color:var(--teal);}
+  .down{color:var(--coral);}
+  .neutral{color:var(--text-secondary);}
+  details.kpi{cursor:pointer;}
+  details.kpi summary{list-style:none;}
+  details.kpi summary::-webkit-details-marker{display:none;}
+  .kpi-expand-hint{display:block;font-size:10px;color:var(--text-muted);margin-top:7px;}
+  .kpi-expand-hint::before{content:"Источники ▾";}
+  details.kpi[open] .kpi-expand-hint::before{content:"Источники ▴";}
+  .kpi-breakdown{margin-top:9px;padding-top:9px;border-top:0.5px dashed var(--border-strong);
+    display:flex;flex-direction:column;gap:5px;}
+  .kpi-breakdown .kb-row{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;}
+  .kpi-breakdown .kb-row .kbl{color:var(--text-secondary);}
+  .kpi-breakdown .kb-row .kbv{font-weight:500;white-space:nowrap;}
+  .kpi-breakdown .kb-cap{font-size:10px;color:var(--text-muted);margin-top:3px;}
+  .chart-wrap{position:relative;width:100%;height:220px;margin:14px 0 6px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
+  th,td{text-align:left;padding:7px 8px;border-bottom:0.5px solid var(--border);white-space:nowrap;}
+  th{color:var(--text-muted);font-weight:500;font-size:11.5px;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{text-align:center;font-variant-numeric:tabular-nums;}
+  th.num{text-align:center;}
+  .table-scroll{overflow-x:auto;}
+  .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab-btn{font-size:12.5px;color:var(--text-secondary);background:var(--surface-1);
+    border:0.5px solid var(--border);border-radius:20px;padding:6px 14px;cursor:pointer;}
+  .tab-btn.active{background:var(--text-primary);color:#fff;border-color:var(--text-primary);}
+  .proc-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0 18px;}
+  .proc-group{background:var(--surface-1);border-radius:10px;padding:12px 14px;}
+  .proc-group h4{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;
+    border-radius:20px;margin:0 0 10px;}
+  .proc-stats{display:flex;flex-direction:column;gap:7px;}
+  .proc-stats .row{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;gap:10px;}
+  .proc-stats .row .sl{color:var(--text-secondary);}
+  .proc-stats .row .sv{font-weight:500;white-space:nowrap;}
+  .funnel-chain{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0 18px;}
+  .funnel-chain .step{background:var(--surface-1);border-radius:8px;padding:10px 14px;text-align:center;min-width:96px;}
+  .funnel-chain .step.media{background:var(--gray-bg);}
+  .funnel-chain .step .fl{font-size:10.5px;color:var(--text-muted);margin-bottom:3px;}
+  .funnel-chain .step .fv{font-size:15px;font-weight:500;}
+  .funnel-chain .arrow{color:var(--border-strong);font-size:16px;}
+  .funnel-chain .divider{width:1px;align-self:stretch;background:var(--border-strong);margin:0 4px;}
+  .media-note{font-size:11.5px;color:var(--text-muted);margin:0 0 4px;}
+  .quality-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;margin-left:6px;
+    background:var(--gray-bg);color:var(--gray-text);}
+  .agency-table{table-layout:fixed;}
+  .agency-table th, .agency-table td{text-align:right;}
+  .agency-table th:first-child, .agency-table td:first-child{text-align:left;}
+  .agency-table .conv{color:var(--text-secondary);}
+  .perf-table th, .perf-table td{white-space:nowrap;}
+  .perf-table thead tr:first-child th{color:var(--text-muted);font-weight:500;font-size:11px;
+    text-align:center;border-bottom:none;padding-bottom:2px;}
+  .perf-table thead tr:first-child th:first-child,
+  .perf-table thead tr:first-child th:nth-child(2){text-align:left;}
+  .rollup-note{font-size:11.5px;color:var(--text-muted);margin-top:8px;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:11.5px;color:var(--text-secondary);}
+  .legend .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+
+  .activity-grid{display:flex;flex-direction:column;gap:14px;margin-top:12px;}
+  .activity-card{background:var(--surface-1);border-radius:10px;padding:14px 16px;
+    width:400px;max-width:100%;align-self:flex-start;box-sizing:border-box;}
+  .activity-card summary{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+    cursor:pointer;list-style:none;}
+  .activity-card summary::-webkit-details-marker{display:none;}
+  .activity-card summary::after{content:"▾";font-size:11px;color:var(--text-muted);
+    flex-shrink:0;margin-top:3px;transition:transform 0.15s;}
+  .activity-card[open] summary::after{transform:rotate(180deg);}
+  .activity-card .at{font-size:13.5px;font-weight:500;margin-bottom:2px;}
+  .activity-card .am{font-size:11.5px;color:var(--text-muted);}
+  .activity-card .ahead-result{font-size:12px;color:var(--text-secondary);text-align:right;white-space:nowrap;
+    width:100px;flex-shrink:0;}
+  .activity-card .ahead-result div{width:100%;text-align:right;}
+  .activity-card .ahead-result div + div{margin-top:2px;}
+  .activity-detail-block{margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);
+    display:flex;flex-direction:column;gap:14px;}
+  .activity-detail-block .agroup{font-size:10.5px;color:var(--text-muted);margin:0 0 4px;}
+  .activity-detail-block .arow{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+  .activity-detail-block .arow .al{color:var(--text-secondary);}
+  .activity-detail-block .arow .av{font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="period-bar">
+    <span class="pl">Сравнение:</span>
+    <div class="tabs" id="tabsPeriod" style="margin-bottom:0;">
+      <button class="tab-btn" data-period="week">Неделя к неделе</button>
+      <button class="tab-btn active" data-period="month">Месяц к месяцу</button>
+      <button class="tab-btn" data-period="quarter">Квартал к кварталу</button>
+    </div>
+  </div>
+
+  <!-- SECTION 1: BUSINESS OVERVIEW -->
+  <section class="report">
+    <div class="report-head">
+      <h2>1. Общий результат</h2>
+      <span class="tag tag-gray">Клик по показателю — из каких источников он сложился</span>
+    </div>
+
+    <div class="subhead">Коммерческий результат</div>
+    <div class="kpi-row">
+      <details class="kpi">
+        <summary>
+          <div class="l">Выручка</div><div class="v">$980 000</div>
+          <div class="d up" data-week="+1%" data-month="+6%" data-quarter="+18%">+6%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">$590 000</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">$195 000</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">$180 000</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">$8 500</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">$6 500</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Количество броней</div><div class="v">9</div>
+          <div class="d up" data-week="0" data-month="+1" data-quarter="+2">+1</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">6</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">1</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">1</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">1</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">0</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Количество сделок</div><div class="v">7</div>
+          <div class="d up" data-week="0" data-month="+1" data-quarter="+2">+1</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">5</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">1</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">1</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">0</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Средний чек</div><div class="v">$140 000</div>
+          <div class="d up" data-week="0%" data-month="+1%" data-quarter="-1%">+1%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">$138 000</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">$142 000</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">$141 000</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">$137 000</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">$139 000</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Выполнение плана продаж</div><div class="v">85%</div>
+          <div class="d up" data-week="+1 п.п." data-month="+5 п.п." data-quarter="+9 п.п.">+5 п.п.</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">52 п.п.</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">17 п.п.</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">12 п.п.</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">3 п.п.</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">1 п.п.</span></div>
+          <div class="kb-cap">Общий план — один на компанию. Показатель — не среднее, а сумма вкладов направлений в его выполнение.</div>
+        </div>
+      </details>
+    </div>
+    <div class="kpi-row">
+      <details class="kpi">
+        <summary>
+          <div class="l">Маркетинговые расходы</div><div class="v">$56 000</div>
+          <div class="d neutral" data-week="+2%" data-month="+9%" data-quarter="+21%">+9%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">$29 500</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">$15 000</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">$4 000</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">$5 000</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">$2 500</span></div>
+          <div class="kb-cap">Для агентов расходы — это сумма выплаченных комиссий.</div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Стоимость сделки (CAC)</div><div class="v">$8 000</div>
+          <div class="d up" data-week="-$160" data-month="-$560" data-quarter="-$1 040">-$560</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">$5 900,0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">$15 000,0</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">$4 000,0</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">—</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">—</span></div>
+          <div class="kb-cap">У агентов — по комиссии, у остальных — по расходам на направление. SMM и сайт пока не дают напрямую атрибутируемых сделок — CAC не считается.</div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">ROMI</div><div class="v">1 750%</div>
+          <div class="d up" data-week="+20 п.п." data-month="+90 п.п." data-quarter="+180 п.п.">+90 п.п.</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">2 000%</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">1 300%</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">4 500%</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">170%</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">260%</span></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="subhead">Присутствие бренда</div>
+    <div class="kpi-row">
+      <details class="kpi">
+        <summary>
+          <div class="l">Показы</div><div class="v">1 600 000</div>
+          <div class="d up" data-week="+3%" data-month="+11%" data-quarter="+28%">+11%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">980 000</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">330 000</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">250 000</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">40 000</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Охваченная аудитория</div><div class="v">620 000</div>
+          <div class="d up" data-week="+2%" data-month="+8%" data-quarter="+22%">+8%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">419 300</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">129 100</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">56 600</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">15 000</span></div>
+          <div class="kb-cap">Сумма охвата по каналам, не уникальный — пересечения между каналами не убрать.</div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Подписчики</div><div class="v">5 358</div>
+          <div class="d up" data-week="+45" data-month="+180" data-quarter="+520">+180</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">+20</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">+160</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">0</span></div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Брендовый поисковый спрос</div><div class="v">2 300</div>
+          <div class="d up" data-week="+4%" data-month="+18%" data-quarter="+9 п.п.">+18%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">500</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">1 800</span></div>
+          <div class="kb-cap">Абсолютный объём брендовых запросов в месяц. Реально формирует спрос сайт (SEO/прямые заходы).</div>
+        </div>
+      </details>
+      <details class="kpi">
+        <summary>
+          <div class="l">Трафик на сайт</div><div class="v">8 400</div>
+          <div class="d up" data-week="+1%" data-month="+5%" data-quarter="+12%">+5%</div>
+          <span class="kpi-expand-hint"></span>
+        </summary>
+        <div class="kpi-breakdown">
+          <div class="kb-row"><span class="kbl">Агенты</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">Performance-реклама</span><span class="kbv">1 800</span></div>
+          <div class="kb-row"><span class="kbl">Спецактивности</span><span class="kbv">0</span></div>
+          <div class="kb-row"><span class="kbl">SMM</span><span class="kbv">2 100</span></div>
+          <div class="kb-row"><span class="kbl">Сайты</span><span class="kbv">4 500</span></div>
+          <div class="kb-cap">Сайты — SEO + прямые заходы.</div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- SECTION 2: AGENCY SALES -->
+  <section class="report">
+    <div class="report-head">
+      <h2>2. Агентские продажи</h2>
+    </div>
+
+    <div class="tabs" id="tabsAgencyProject">
+      <button class="tab-btn active" data-project="all">Все проекты</button>
+      <button class="tab-btn" data-project="ardhana">Ardhana</button>
+      <button class="tab-btn" data-project="satori">Satori</button>
+      <button class="tab-btn" data-project="aravita">Aravita</button>
+      <button class="tab-btn" data-project="bloom">Bloom</button>
+    </div>
+
+    <div class="table-scroll">
+    <table class="agency-table" id="agency-all">
+      <colgroup>
+        <col style="width:18%"><col style="width:9%"><col style="width:9%"><col style="width:8%">
+        <col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:10%"><col style="width:12%">
+      </colgroup>
+      <thead><tr><th>Агентство</th><th>Регистрации</th><th>Конв. в Zoom</th><th>Zoom</th>
+        <th>Конв. в Брони</th><th>Брони</th><th>Конв. в Сделку</th><th>Сделки</th>
+        <th>Сквозная конв.</th><th>Выручка</th></tr></thead>
+      <tbody>
+        <tr><td>EstateWin Partners</td><td>16</td><td class="conv">31,3%</td><td>5</td>
+          <td class="conv">60,0%</td><td>3</td><td class="conv">100,0%</td><td>3</td>
+          <td class="conv">18,8%</td><td>$354 000</td></tr>
+        <tr><td>Prime Realty Group</td><td>14</td><td class="conv">28,6%</td><td>4</td>
+          <td class="conv">50,0%</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">7,1%</td><td>$118 000</td></tr>
+        <tr><td>Coastal Homes Agency</td><td>9</td><td class="conv">33,3%</td><td>3</td>
+          <td class="conv">33,3%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">11,1%</td><td>$118 000</td></tr>
+        <tr><td>Skyline Brokers</td><td>6</td><td class="conv">16,7%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td>45</td><td class="conv">28,9%</td><td>13</td>
+          <td class="conv">46,2%</td><td>6</td><td class="conv">83,3%</td><td>5</td>
+          <td class="conv">11,1%</td><td>$590 000</td></tr>
+      </tbody>
+    </table>
+
+    <table class="agency-table" id="agency-ardhana" style="display:none;">
+      <colgroup>
+        <col style="width:18%"><col style="width:9%"><col style="width:9%"><col style="width:8%">
+        <col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:10%"><col style="width:12%">
+      </colgroup>
+      <thead><tr><th>Агентство</th><th>Регистрации</th><th>Конв. в Zoom</th><th>Zoom</th>
+        <th>Конв. в Брони</th><th>Брони</th><th>Конв. в Сделку</th><th>Сделки</th>
+        <th>Сквозная конв.</th><th>Выручка</th></tr></thead>
+      <tbody>
+        <tr><td>EstateWin Partners</td><td>6</td><td class="conv">33,3%</td><td>2</td>
+          <td class="conv">50,0%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">16,7%</td><td>$118 000</td></tr>
+        <tr><td>Prime Realty Group</td><td>6</td><td class="conv">33,3%</td><td>2</td>
+          <td class="conv">50,0%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">16,7%</td><td>$118 000</td></tr>
+        <tr><td>Coastal Homes Agency</td><td>4</td><td class="conv">25,0%</td><td>1</td>
+          <td class="conv">100,0%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">25,0%</td><td>$118 000</td></tr>
+        <tr><td>Skyline Brokers</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td>18</td><td class="conv">33,3%</td><td>6</td>
+          <td class="conv">50,0%</td><td>3</td><td class="conv">100,0%</td><td>3</td>
+          <td class="conv">16,7%</td><td>$354 000</td></tr>
+      </tbody>
+    </table>
+
+    <table class="agency-table" id="agency-satori" style="display:none;">
+      <colgroup>
+        <col style="width:18%"><col style="width:9%"><col style="width:9%"><col style="width:8%">
+        <col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:10%"><col style="width:12%">
+      </colgroup>
+      <thead><tr><th>Агентство</th><th>Регистрации</th><th>Конв. в Zoom</th><th>Zoom</th>
+        <th>Конв. в Брони</th><th>Брони</th><th>Конв. в Сделку</th><th>Сделки</th>
+        <th>Сквозная конв.</th><th>Выручка</th></tr></thead>
+      <tbody>
+        <tr><td>EstateWin Partners</td><td>5</td><td class="conv">20,0%</td><td>1</td>
+          <td class="conv">100,0%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">20,0%</td><td>$118 000</td></tr>
+        <tr><td>Prime Realty Group</td><td>4</td><td class="conv">25,0%</td><td>1</td>
+          <td class="conv">100,0%</td><td>1</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Coastal Homes Agency</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Skyline Brokers</td><td>2</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">—</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td>13</td><td class="conv">23,1%</td><td>3</td>
+          <td class="conv">66,7%</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">7,7%</td><td>$118 000</td></tr>
+      </tbody>
+    </table>
+
+    <table class="agency-table" id="agency-aravita" style="display:none;">
+      <colgroup>
+        <col style="width:18%"><col style="width:9%"><col style="width:9%"><col style="width:8%">
+        <col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:10%"><col style="width:12%">
+      </colgroup>
+      <thead><tr><th>Агентство</th><th>Регистрации</th><th>Конв. в Zoom</th><th>Zoom</th>
+        <th>Конв. в Брони</th><th>Брони</th><th>Конв. в Сделку</th><th>Сделки</th>
+        <th>Сквозная конв.</th><th>Выручка</th></tr></thead>
+      <tbody>
+        <tr><td>EstateWin Partners</td><td>3</td><td class="conv">33,3%</td><td>1</td>
+          <td class="conv">100,0%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">33,3%</td><td>$118 000</td></tr>
+        <tr><td>Prime Realty Group</td><td>3</td><td class="conv">33,3%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Coastal Homes Agency</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Skyline Brokers</td><td>1</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">—</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td>9</td><td class="conv">33,3%</td><td>3</td>
+          <td class="conv">33,3%</td><td>1</td><td class="conv">100,0%</td><td>1</td>
+          <td class="conv">11,1%</td><td>$118 000</td></tr>
+      </tbody>
+    </table>
+
+    <table class="agency-table" id="agency-bloom" style="display:none;">
+      <colgroup>
+        <col style="width:18%"><col style="width:9%"><col style="width:9%"><col style="width:8%">
+        <col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:8%">
+        <col style="width:10%"><col style="width:12%">
+      </colgroup>
+      <thead><tr><th>Агентство</th><th>Регистрации</th><th>Конв. в Zoom</th><th>Zoom</th>
+        <th>Конв. в Брони</th><th>Брони</th><th>Конв. в Сделку</th><th>Сделки</th>
+        <th>Сквозная конв.</th><th>Выручка</th></tr></thead>
+      <tbody>
+        <tr><td>EstateWin Partners</td><td>2</td><td class="conv">50,0%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Prime Realty Group</td><td>1</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">—</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Coastal Homes Agency</td><td>1</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">—</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr><td>Skyline Brokers</td><td>1</td><td class="conv">0,0%</td><td>0</td>
+          <td class="conv">—</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td>5</td><td class="conv">20,0%</td><td>1</td>
+          <td class="conv">0,0%</td><td>0</td><td class="conv">—</td><td>0</td>
+          <td class="conv">0,0%</td><td>$0</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- SECTION 3: PERFORMANCE ADVERTISING -->
+  <section class="report">
+    <div class="report-head">
+      <h2>3. Performance-реклама</h2>
+    </div>
+
+    <div class="funnel-chain">
+      <div class="step media"><div class="fl">Показы</div><div class="fv">980 000</div></div>
+      <div class="divider"></div>
+      <div class="step"><div class="fl">Lead</div><div class="fv">20</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="fl">QLead</div><div class="fv">8</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="fl">Zoom</div><div class="fv">3</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="fl">Бронь</div><div class="fv">1</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="fl">Сделка</div><div class="fv">1</div></div>
+    </div>
+
+    <div class="chart-wrap"><canvas id="chartPerfFunnel" role="img" aria-label="Воронка Performance-рекламы: Lead, QLead, Zoom, бронь, сделка"></canvas></div>
+
+    <div class="subhead">Детализация</div>
+    <div class="tabs" id="tabsPerfView">
+      <button class="tab-btn active" data-view="channel">По рекламным каналам</button>
+      <button class="tab-btn" data-view="project">По проектам</button>
+    </div>
+
+    <div id="perfChannelView">
+    <div class="table-scroll">
+    <table class="perf-table">
+      <thead>
+        <tr>
+          <th>Канал</th><th class="num">Расходы</th>
+          <th class="num">Lead</th><th class="num">CPL</th><th class="num">CR(QL)</th>
+          <th class="num">QLead</th><th class="num">CPQL</th><th class="num">CR(Z)</th>
+          <th class="num">Zoom</th><th class="num">CPZ</th><th class="num">CR(B)</th>
+          <th class="num">Бронь</th><th class="num">CPB</th><th class="num">CR(S)</th>
+          <th class="num">Сделка</th><th class="num">CPS</th><th class="num">Сквозная конв.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Яндекс Директ</td><td class="num">$6 000</td>
+          <td class="num">8</td><td class="num">$750,0</td><td class="num">37,5%</td>
+          <td class="num">3</td><td class="num">$2 000,0</td><td class="num">33,3%</td>
+          <td class="num">1</td><td class="num">$6 000,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$6 000,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$6 000,0</td><td class="num">12,5%</td></tr>
+        <tr><td>Instagram / Meta Ads</td><td class="num">$4 500</td>
+          <td class="num">6</td><td class="num">$750,0</td><td class="num">33,3%</td>
+          <td class="num">2</td><td class="num">$2 250,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$4 500,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr><td>Google Ads</td><td class="num">$3 000</td>
+          <td class="num">4</td><td class="num">$750,0</td><td class="num">50,0%</td>
+          <td class="num">2</td><td class="num">$1 500,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$3 000,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr><td>TikTok Ads</td><td class="num">$1 500</td>
+          <td class="num">2</td><td class="num">$750,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$1 500,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td class="num">$15 000</td>
+          <td class="num">20</td><td class="num">$750,0</td><td class="num">40,0%</td>
+          <td class="num">8</td><td class="num">$1 875,0</td><td class="num">37,5%</td>
+          <td class="num">3</td><td class="num">$5 000,0</td><td class="num">33,3%</td>
+          <td class="num">1</td><td class="num">$15 000,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$15 000,0</td><td class="num">5,0%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+
+    <div id="perfProjectView" style="display:none;">
+    <div class="table-scroll">
+    <table class="perf-table">
+      <thead>
+        <tr>
+          <th>Проект</th><th class="num">Расходы</th>
+          <th class="num">Lead</th><th class="num">CPL</th><th class="num">CR(QL)</th>
+          <th class="num">QLead</th><th class="num">CPQL</th><th class="num">CR(Z)</th>
+          <th class="num">Zoom</th><th class="num">CPZ</th><th class="num">CR(B)</th>
+          <th class="num">Бронь</th><th class="num">CPB</th><th class="num">CR(S)</th>
+          <th class="num">Сделка</th><th class="num">CPS</th><th class="num">Сквозная конв.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Ardhana</td><td class="num">$6 500</td>
+          <td class="num">9</td><td class="num">$722,2</td><td class="num">33,3%</td>
+          <td class="num">3</td><td class="num">$2 166,7</td><td class="num">33,3%</td>
+          <td class="num">1</td><td class="num">$6 500,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$6 500,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$6 500,0</td><td class="num">11,1%</td></tr>
+        <tr><td>Satori</td><td class="num">$4 000</td>
+          <td class="num">5</td><td class="num">$800,0</td><td class="num">40,0%</td>
+          <td class="num">2</td><td class="num">$2 000,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$4 000,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr><td>Aravita</td><td class="num">$3 000</td>
+          <td class="num">4</td><td class="num">$750,0</td><td class="num">50,0%</td>
+          <td class="num">2</td><td class="num">$1 500,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$3 000,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr><td>Bloom</td><td class="num">$1 500</td>
+          <td class="num">2</td><td class="num">$750,0</td><td class="num">50,0%</td>
+          <td class="num">1</td><td class="num">$1 500,0</td><td class="num">0,0%</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">—</td>
+          <td class="num">0</td><td class="num">—</td><td class="num">0,0%</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td class="num">$15 000</td>
+          <td class="num">20</td><td class="num">$750,0</td><td class="num">40,0%</td>
+          <td class="num">8</td><td class="num">$1 875,0</td><td class="num">37,5%</td>
+          <td class="num">3</td><td class="num">$5 000,0</td><td class="num">33,3%</td>
+          <td class="num">1</td><td class="num">$15 000,0</td><td class="num">100,0%</td>
+          <td class="num">1</td><td class="num">$15 000,0</td><td class="num">5,0%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: SMM -->
+  <section class="report">
+    <div class="report-head">
+      <h2>4. SMM</h2>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="l">Публикации</div><div class="v">52</div></div>
+      <div class="kpi"><div class="l">Охват</div><div class="v">132 400</div></div>
+      <div class="kpi"><div class="l">Подписчики</div><div class="v">5 358 (+408)</div></div>
+      <div class="kpi"><div class="l">Средний ER</div><div class="v">4,3%</div></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="l">Лиды</div><div class="v">130</div></div>
+      <div class="kpi"><div class="l">Брони</div><div class="v">1</div></div>
+      <div class="kpi"><div class="l">Сделки</div><div class="v">0</div></div>
+    </div>
+
+    <div class="subhead">Динамика по каналам</div>
+    <div class="tabs" id="tabsSMMdetail">
+      <button class="tab-btn active" data-metric="subs">Подписчики</button>
+      <button class="tab-btn" data-metric="reach">Охват</button>
+      <button class="tab-btn" data-metric="er">ER</button>
+    </div>
+    <div class="legend" id="legendSMMdetail"></div>
+    <div class="chart-wrap" style="height:200px;"><canvas id="chartSMMdetail"></canvas></div>
+
+    <div class="subhead">Детализация</div>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Канал</th><th class="num">Публикации</th><th class="num">Охват</th>
+        <th class="num">Прирост подписчиков</th><th class="num">ER, %</th><th class="num">Δ к пред. месяцу</th></tr></thead>
+      <tbody>
+        <tr><td>Instagram HQC</td><td class="num">18</td><td class="num">58 400</td>
+          <td class="num">+184</td><td class="num">4,8</td><td class="num up">+22%</td></tr>
+        <tr><td>Telegram — агентский</td><td class="num">14</td><td class="num">21 100</td>
+          <td class="num">+96</td><td class="num">6,2</td><td class="num up">+11%</td></tr>
+        <tr><td>Telegram — Ardhana</td><td class="num">7</td><td class="num">9 800</td>
+          <td class="num">+37</td><td class="num">5,0</td><td class="num up">+6%</td></tr>
+        <tr><td>Telegram — Satori</td><td class="num">6</td><td class="num">7 300</td>
+          <td class="num">+21</td><td class="num">3,9</td><td class="num down">-4%</td></tr>
+        <tr><td>Telegram — Aravita</td><td class="num">4</td><td class="num">4 200</td>
+          <td class="num">+12</td><td class="num">3,3</td><td class="num up">+2%</td></tr>
+        <tr><td>YouTube HQC</td><td class="num">3</td><td class="num">31 600</td>
+          <td class="num">+58</td><td class="num">2,1</td><td class="num up">+31%</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td class="num">52</td><td class="num">132 400</td>
+          <td class="num">+408</td><td class="num">4,3</td><td class="num up">+11%</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- SECTION 5: SITE -->
+  <section class="report">
+    <div class="report-head">
+      <h2>5. Сайты</h2>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="l">Просмотры</div><div class="v">41 000</div></div>
+      <div class="kpi"><div class="l">Охват</div><div class="v">15 000</div></div>
+      <div class="kpi"><div class="l">Лиды</div><div class="v">82</div></div>
+      <div class="kpi"><div class="l">Брони</div><div class="v">0</div></div>
+      <div class="kpi"><div class="l">Сделки</div><div class="v">0</div></div>
+    </div>
+
+    <div class="subhead">Детализация</div>
+    <div class="tabs" id="tabsSiteView">
+      <button class="tab-btn active" data-view="sources">Источники</button>
+      <button class="tab-btn" data-view="conversion">Конверсия</button>
+    </div>
+
+    <div id="siteSourcesView">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Сайт</th><th class="num">Прямые</th><th class="num">SEO</th>
+        <th class="num">Рефералы</th><th class="num">Соцсети</th></tr></thead>
+      <tbody>
+        <tr><td>/ardhana/villas</td><td class="num">3 500</td><td class="num">6 300</td><td class="num">1 400</td><td class="num">2 800</td></tr>
+        <tr><td>/satori/residences</td><td class="num">2 600</td><td class="num">4 700</td><td class="num">1 100</td><td class="num">2 100</td></tr>
+        <tr><td>/aravita/apartments</td><td class="num">2 100</td><td class="num">3 800</td><td class="num">900</td><td class="num">1 700</td></tr>
+        <tr><td>/bloom/hotel-offers</td><td class="num">1 250</td><td class="num">2 250</td><td class="num">500</td><td class="num">1 000</td></tr>
+        <tr><td>/legion/investments</td><td class="num">750</td><td class="num">1 350</td><td class="num">300</td><td class="num">600</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td class="num">10 200</td><td class="num">18 400</td><td class="num">4 200</td><td class="num">8 200</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+
+    <div id="siteConversionView" style="display:none;">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Сайт</th><th class="num">Показы</th><th class="num">Lead</th>
+        <th class="num">QLead</th><th class="num">Zoom</th><th class="num">Бронь</th><th class="num">Сделка</th></tr></thead>
+      <tbody>
+        <tr><td>/ardhana/villas</td><td class="num">14 000</td><td class="num">29</td><td class="num">10</td><td class="num">4</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>/satori/residences</td><td class="num">10 500</td><td class="num">20</td><td class="num">7</td><td class="num">3</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>/aravita/apartments</td><td class="num">8 500</td><td class="num">17</td><td class="num">6</td><td class="num">2</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>/bloom/hotel-offers</td><td class="num">5 000</td><td class="num">10</td><td class="num">3</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr><td>/legion/investments</td><td class="num">3 000</td><td class="num">6</td><td class="num">2</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+        <tr style="font-weight:500;"><td>Итого</td><td class="num">41 000</td><td class="num">82</td><td class="num">28</td><td class="num">10</td><td class="num">0</td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: STANDALONE ACTIVITIES -->
+  <section class="report">
+    <div class="report-head">
+      <h2>6. Спецактивности</h2>
+    </div>
+    <div class="activity-grid">
+
+      <details class="activity-card">
+        <summary>
+          <div><div class="at">Webinar 18 July</div><div class="am">Вебинар · онлайн · Бюджет $340</div></div>
+          <div class="ahead-result"><div>Лиды: 15</div><div>Сделки: 2</div></div>
+        </summary>
+        <div class="activity-detail-block">
+          <div>
+            <div class="agroup">Затраты</div>
+            <div class="arow"><span class="al">Бюджет</span><span class="av">$340</span></div>
+            <div class="arow"><span class="al">Стоимость привлечения участника</span><span class="av">$1,06</span></div>
+          </div>
+          <div>
+            <div class="agroup">Процесс</div>
+            <div class="arow"><span class="al">Регистрации</span><span class="av">850</span></div>
+            <div class="arow"><span class="al">Посещения</span><span class="av">320</span></div>
+            <div class="arow"><span class="al">Лиды</span><span class="av">15</span></div>
+          </div>
+          <div>
+            <div class="agroup">Воронка продаж</div>
+            <div class="arow"><span class="al">SQL</span><span class="av">7</span></div>
+            <div class="arow"><span class="al">Zoom</span><span class="av">4</span></div>
+            <div class="arow"><span class="al">Брони</span><span class="av">2</span></div>
+          </div>
+          <div>
+            <div class="agroup">Итог</div>
+            <div class="arow"><span class="al">Сделки</span><span class="av">2</span></div>
+            <div class="arow"><span class="al">Выручка</span><span class="av">$23 500</span></div>
+            <div class="arow"><span class="al">ROMI</span><span class="av">6 912%</span></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="activity-card">
+        <summary>
+          <div><div class="at">Bali Property Expo</div><div class="am">Выставка · офлайн · Бюджет $1 800</div></div>
+          <div class="ahead-result"><div>Лиды: 15</div><div>Сделки: 1</div></div>
+        </summary>
+        <div class="activity-detail-block">
+          <div>
+            <div class="agroup">Затраты</div>
+            <div class="arow"><span class="al">Бюджет</span><span class="av">$1 800</span></div>
+            <div class="arow"><span class="al">Стоимость привлечения участника</span><span class="av">$15,0</span></div>
+          </div>
+          <div>
+            <div class="agroup">Процесс</div>
+            <div class="arow"><span class="al">Охват</span><span class="av">8 200</span></div>
+            <div class="arow"><span class="al">Посещения</span><span class="av">120</span></div>
+            <div class="arow"><span class="al">Лиды</span><span class="av">15</span></div>
+          </div>
+          <div>
+            <div class="agroup">Воронка продаж</div>
+            <div class="arow"><span class="al">SQL</span><span class="av">6</span></div>
+            <div class="arow"><span class="al">Zoom</span><span class="av">3</span></div>
+            <div class="arow"><span class="al">Брони</span><span class="av">1</span></div>
+          </div>
+          <div>
+            <div class="agroup">Итог</div>
+            <div class="arow"><span class="al">Сделки</span><span class="av">1</span></div>
+            <div class="arow"><span class="al">Выручка</span><span class="av">$9 000</span></div>
+            <div class="arow"><span class="al">ROMI</span><span class="av">500%</span></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="activity-card">
+        <summary>
+          <div><div class="at">PR-публикация в отраслевом медиа</div><div class="am">PR-публикация · онлайн · Бюджет $260</div></div>
+          <div class="ahead-result"><div>Лиды: 5</div><div>Сделки: 0</div></div>
+        </summary>
+        <div class="activity-detail-block">
+          <div>
+            <div class="agroup">Затраты</div>
+            <div class="arow"><span class="al">Бюджет</span><span class="av">$260</span></div>
+          </div>
+          <div>
+            <div class="agroup">Процесс</div>
+            <div class="arow"><span class="al">Охват</span><span class="av">9 600</span></div>
+            <div class="arow"><span class="al">Лиды</span><span class="av">5</span></div>
+          </div>
+          <div>
+            <div class="agroup">Воронка продаж</div>
+            <div class="arow"><span class="al">SQL</span><span class="av">2</span></div>
+            <div class="arow"><span class="al">Zoom</span><span class="av">1</span></div>
+            <div class="arow"><span class="al">Брони</span><span class="av">0</span></div>
+          </div>
+          <div>
+            <div class="agroup">Итог</div>
+            <div class="arow"><span class="al">Сделки</span><span class="av">0</span></div>
+            <div class="arow"><span class="al">Отложенные продажи</span><span class="av">не учитываются</span></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="activity-card">
+        <summary>
+          <div><div class="at">Партнёрская интеграция с брокерским порталом</div><div class="am">Партнёрская интеграция · онлайн · Бюджет $0 (бартер)</div></div>
+          <div class="ahead-result"><div>Лиды: 6</div><div>Сделки: 1</div></div>
+        </summary>
+        <div class="activity-detail-block">
+          <div>
+            <div class="agroup">Затраты</div>
+            <div class="arow"><span class="al">Бюджет</span><span class="av">$0 (бартер)</span></div>
+          </div>
+          <div>
+            <div class="agroup">Процесс</div>
+            <div class="arow"><span class="al">Охват</span><span class="av">4 100</span></div>
+            <div class="arow"><span class="al">Лиды</span><span class="av">6</span></div>
+          </div>
+          <div>
+            <div class="agroup">Воронка продаж</div>
+            <div class="arow"><span class="al">SQL</span><span class="av">2</span></div>
+            <div class="arow"><span class="al">Zoom</span><span class="av">1</span></div>
+            <div class="arow"><span class="al">Брони</span><span class="av">1</span></div>
+          </div>
+          <div>
+            <div class="agroup">Итог</div>
+            <div class="arow"><span class="al">Сделки</span><span class="av">1</span></div>
+            <div class="arow"><span class="al">Выручка</span><span class="av">$11 500</span></div>
+            <div class="arow"><span class="al">ROMI</span><span class="av">—</span></div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+document.getElementById('tabsPeriod').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#tabsPeriod .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const period = btn.dataset.period;
+  document.querySelectorAll('[data-week]').forEach(el => {
+    el.textContent = el.dataset[period];
+  });
+});
+
+document.getElementById('tabsSiteView').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#tabsSiteView .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const view = btn.dataset.view;
+  document.getElementById('siteSourcesView').style.display = view === 'sources' ? '' : 'none';
+  document.getElementById('siteConversionView').style.display = view === 'conversion' ? '' : 'none';
+});
+
+document.getElementById('tabsAgencyProject').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#tabsAgencyProject .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const project = btn.dataset.project;
+  document.querySelectorAll('.agency-table').forEach(t => {
+    t.style.display = (t.id === 'agency-' + project) ? '' : 'none';
+  });
+});
+
+document.getElementById('tabsPerfView').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#tabsPerfView .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const view = btn.dataset.view;
+  document.getElementById('perfChannelView').style.display = view === 'channel' ? '' : 'none';
+  document.getElementById('perfProjectView').style.display = view === 'project' ? '' : 'none';
+});
+
+new Chart(document.getElementById('chartPerfFunnel'), {
+  type: 'bar',
+  data: {
+    labels: ['Lead', 'QLead', 'Zoom', 'Бронь', 'Сделка'],
+    datasets: [{
+      label: 'Количество',
+      data: [20, 8, 3, 1, 1],
+      backgroundColor: '#0f6e56',
+      borderRadius: 4,
+      maxBarThickness: 26
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { color: '#52514e', font: { size: 12 } } }
+    }
+  }
+});
+
+const smmMonths = ['Фев','Март','Апр','Май','Июнь','Июль'];
+const smmChannels = [
+  { label: 'Instagram HQC', color: '#2a78d6' },
+  { label: 'Telegram — агентский', color: '#1baf7a' },
+  { label: 'Telegram — Ardhana', color: '#eda100' },
+  { label: 'Telegram — Satori', color: '#008300' },
+  { label: 'Telegram — Aravita', color: '#4a3aa7' },
+  { label: 'YouTube HQC', color: '#e34948' }
+];
+const smmData = {
+  subs: [
+    [1200,1340,1480,1600,1750,1934],
+    [900,970,1040,1110,1190,1286],
+    [420,450,478,505,540,577],
+    [310,330,345,362,378,399],
+    [180,190,198,205,212,224],
+    [640,690,750,810,880,938]
+  ],
+  reach: [
+    [42000,45000,47500,51000,54200,58400],
+    [15000,16200,17400,18600,19800,21100],
+    [6800,7200,7600,8100,8700,9800],
+    [5200,5500,5800,6300,6800,7300],
+    [3000,3200,3400,3700,3950,4200],
+    [19000,21500,24000,26500,29000,31600]
+  ],
+  er: [
+    [5.1,5.0,4.9,4.9,4.8,4.8],
+    [6.6,6.5,6.4,6.3,6.2,6.2],
+    [5.4,5.3,5.2,5.1,5.0,5.0],
+    [4.3,4.2,4.1,4.0,4.0,3.9],
+    [3.6,3.5,3.4,3.4,3.3,3.3],
+    [2.4,2.3,2.2,2.2,2.1,2.1]
+  ]
+};
+const smmSuffix = { subs: '', reach: '', er: '%' };
+
+document.getElementById('legendSMMdetail').innerHTML = smmChannels.map(s =>
+  `<span><span class="dot" style="background:${s.color}"></span>${s.label}</span>`
+).join('');
+
+const smmChartDetail = new Chart(document.getElementById('chartSMMdetail'), {
+  type: 'line',
+  data: {
+    labels: smmMonths,
+    datasets: smmChannels.map((s, i) => ({
+      label: s.label, data: smmData.subs[i], borderColor: s.color, backgroundColor: s.color,
+      borderWidth: 2, pointRadius: 3, pointHoverRadius: 4, tension: 0.3, fill: false
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#898781', font: { size: 11 } } },
+      y: { grid: { color: '#e1e0d9' }, ticks: { color: '#898781', font: { size: 11 } } }
+    }
+  }
+});
+
+document.getElementById('tabsSMMdetail').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('#tabsSMMdetail .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const metric = btn.dataset.metric;
+  smmChartDetail.data.datasets.forEach((ds, i) => { ds.data = smmData[metric][i]; });
+  smmChartDetail.options.scales.y.ticks.callback = v => v + smmSuffix[metric];
+  smmChartDetail.update();
+});
+</script>
+</body>
+</html>
