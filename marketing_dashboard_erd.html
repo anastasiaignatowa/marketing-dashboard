@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>HQC · Схема БД маркетингового дашборда</title>
+<style>
+  :root{
+    --bg:#faf9f7;
+    --surface:#ffffff;
+    --border:#e4e0d9;
+    --border-strong:#cfc9bd;
+    --text:#1e1c19;
+    --text-secondary:#5c584f;
+    --text-muted:#918c80;
+    --dim:#3b6ea5;      /* измерения */
+    --dim-bg:#eaf1f9;
+    --fact:#b5541f;     /* факты */
+    --fact-bg:#fbeee2;
+    --metric:#2f8f7a;   /* метрики каналов */
+    --metric-bg:#e6f4f0;
+    --plan:#7457a6;     /* планирование */
+    --plan-bg:#f2ecf9;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:32px 24px 80px;
+  }
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 24px;line-height:1.5;max-width:900px;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px;font-size:12.5px;color:var(--text-secondary);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .diagram-wrap{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px;
+  }
+  .canvas-scale-wrap{width:100%;overflow:hidden;}
+  .canvas{position:relative;width:1560px;height:800px;transform-origin:top left;}
+  .box{
+    position:absolute;
+    background:var(--surface);
+    border:1.5px solid var(--border-strong);
+    border-radius:var(--radius);
+    padding:9px 11px;
+    font-size:11.5px;
+    line-height:1.55;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+    z-index:2;
+  }
+  .box.dim{border-color:var(--dim);}
+  .box.fact{border-color:var(--fact);border-width:2px;}
+  .box.metric{border-color:var(--metric);}
+  .box.plan{border-color:var(--plan);}
+  .box-title{
+    font-weight:700;font-size:12.5px;margin-bottom:5px;padding-bottom:5px;
+    border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
+  }
+  .box.dim .box-title{color:var(--dim);}
+  .box.fact .box-title{color:var(--fact);}
+  .box.metric .box-title{color:var(--metric);}
+  .box.plan .box-title{color:var(--plan);}
+  .tag{font-size:9px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;}
+  .pk{color:var(--text);font-weight:600;}
+  .fk{color:var(--text-muted);}
+  svg.lines{position:absolute;top:0;left:0;z-index:1;overflow:visible;}
+  .section{margin-top:44px;}
+  .section h2{font-size:17px;margin:0 0 6px;}
+  .section .lead-in{color:var(--text-secondary);font-size:13.5px;max-width:900px;line-height:1.6;margin-bottom:18px;}
+  .group-heading{
+    display:flex;align-items:center;gap:8px;margin:34px 0 12px;font-size:13px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);
+  }
+  .entity-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:18px 20px;margin-bottom:16px;
+  }
+  .entity-card h3{margin:0 0 3px;font-size:15px;}
+  .entity-card .why{color:var(--text-secondary);font-size:13px;margin:0 0 14px;line-height:1.55;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--text-muted);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--border-strong);
+  }
+  td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  td.field{font-family:"SF Mono",Consolas,monospace;font-size:12px;white-space:nowrap;color:var(--text);}
+  td.type{color:var(--text-muted);white-space:nowrap;font-size:12px;}
+  td.comment{color:var(--text-secondary);}
+  .badge{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:6px;}
+  .badge.pk{background:#1e1c19;color:#fff;}
+  .badge.fk{background:var(--border);color:var(--text-secondary);}
+</style>
+</head>
+<body>
+
+<h1>HQC · Маркетинговая отчётность — структура БД</h1>
+<p class="subtitle">
+  Источник: агрегированный дашборд по агентским продажам, performance-рекламе, SMM, сайтам и спецактивностям.
+  Схема ниже — целевая модель для Supabase: хранятся сырые события, все показатели отчёта (CPL, ROMI, CAC, конверсии,
+  сравнение неделя/месяц/квартал) считаются view/запросами поверх них. Так как CRM нет и данные вносятся вручную,
+  <code>occurred_at</code> в <code>lead_stage_events</code> — это «дата, на которую известен статус», а не точный момент
+  перехода: логика «дошёл до этапа → все предыдущие тоже пройдены» реализуется на уровне скрипта записи (бэкофилл),
+  а порядок этапов на канал вынесен в отдельный справочник <code>funnel_stage_defs</code>, а не зашит в код.
+</p>
+
+<div class="legend">
+  <span><span class="swatch" style="background:var(--dim)"></span>Измерения (справочники)</span>
+  <span><span class="swatch" style="background:var(--fact)"></span>Факты (сырые события)</span>
+  <span><span class="swatch" style="background:var(--metric)"></span>Метрики каналов (по дням)</span>
+  <span><span class="swatch" style="background:var(--plan)"></span>Планирование (изолированно)</span>
+</div>
+
+<div class="diagram-wrap">
+<div class="canvas-scale-wrap">
+<div class="canvas">
+  <svg class="lines" width="1560" height="800">
+    <defs>
+      <marker id="arrow-dim" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#3b6ea5"/>
+      </marker>
+      <marker id="arrow-fact" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#b5541f"/>
+      </marker>
+      <marker id="arrow-metric" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#2f8f7a"/>
+      </marker>
+    </defs>
+
+    <!-- dimensions -> projects (self-referencing FKs among dimensions) -->
+    <path d="M685,150 L790,110" stroke="#3b6ea5" stroke-width="1.6" fill="none" marker-end="url(#arrow-dim)"/> <!-- smm_channels -> projects -->
+    <path d="M1035,150 L865,110" stroke="#3b6ea5" stroke-width="1.6" fill="none" marker-end="url(#arrow-dim)"/> <!-- sites -> projects -->
+    <path d="M1215,170 L880,105" stroke="#3b6ea5" stroke-width="1.6" fill="none" marker-end="url(#arrow-dim)"/> <!-- events -> projects -->
+
+    <!-- leads -> dimensions -->
+    <path d="M600,280 L100,130" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> agencies -->
+    <path d="M640,280 L280,130" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> ad_channels -->
+    <path d="M700,280 L680,150" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> smm_channels -->
+    <path d="M840,280 L860,130" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> projects -->
+    <path d="M900,280 L1030,150" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> sites -->
+    <path d="M960,280 L1210,170" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/> <!-- leads -> events -->
+
+    <!-- lead_stage_events -> leads -->
+    <path d="M1000,280 L840,540" stroke="#b5541f" stroke-width="1.8" fill="none" marker-end="url(#arrow-fact)"/>
+
+    <!-- funnel_stage_defs -> lead_stage_events (config reference, not a real FK) -->
+    <path d="M1110,460 L1110,425" stroke="#3b6ea5" stroke-width="1.4" stroke-dasharray="3 3" fill="none" marker-end="url(#arrow-dim)"/>
+
+    <!-- lead_contacts -> leads -->
+    <path d="M370,460 L650,440" stroke="#b5541f" stroke-width="1.6" fill="none" marker-end="url(#arrow-fact)"/>
+
+    <!-- channel metrics -> dimensions -->
+    <path d="M170,620 L280,130" stroke="#2f8f7a" stroke-width="1.6" fill="none" marker-end="url(#arrow-metric)"/> <!-- ad_daily_metrics -> ad_channels -->
+    <path d="M200,620 L830,105" stroke="#2f8f7a" stroke-width="1.3" fill="none" stroke-dasharray="4 3" marker-end="url(#arrow-metric)"/> <!-- ad_daily_metrics -> projects -->
+    <path d="M670,620 L690,150" stroke="#2f8f7a" stroke-width="1.6" fill="none" marker-end="url(#arrow-metric)"/> <!-- smm_daily_metrics -> smm_channels -->
+    <path d="M1010,620 L1035,150" stroke="#2f8f7a" stroke-width="1.6" fill="none" marker-end="url(#arrow-metric)"/> <!-- site_daily_metrics -> sites -->
+  </svg>
+
+  <!-- DIMENSIONS ROW -->
+  <div class="box dim" style="left:20px; top:40px; width:170px;">
+    <div class="box-title">agencies <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name</div>
+    <div>commission_rate</div>
+  </div>
+
+  <div class="box dim" style="left:210px; top:40px; width:170px;">
+    <div class="box-title">ad_channels <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name</div>
+    <div>platform</div>
+  </div>
+
+  <div class="box dim" style="left:600px; top:40px; width:180px;">
+    <div class="box-title">smm_channels <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name</div>
+    <div>platform</div>
+    <div class="fk">↳ fk project_id</div>
+  </div>
+
+  <div class="box dim" style="left:800px; top:40px; width:150px;">
+    <div class="box-title">projects <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name</div>
+    <div>slug</div>
+    <div>status</div>
+  </div>
+
+  <div class="box dim" style="left:970px; top:40px; width:160px;">
+    <div class="box-title">sites <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>path</div>
+    <div class="fk">↳ fk project_id</div>
+  </div>
+
+  <div class="box dim" style="left:1150px; top:40px; width:180px;">
+    <div class="box-title">events <span class="tag">dim</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name / type</div>
+    <div>format / event_date</div>
+    <div>budget</div>
+    <div class="fk">↳ fk project_id</div>
+  </div>
+
+  <div class="box plan" style="left:1360px; top:40px; width:170px;">
+    <div class="box-title">sales_plans <span class="tag">план</span></div>
+    <div class="pk">🔑 id</div>
+    <div>period_type</div>
+    <div>period_start/end</div>
+    <div>plan_amount</div>
+  </div>
+
+  <div class="box plan" style="left:1360px; top:180px; width:170px;">
+    <div class="box-title">brand_metrics <span class="tag">план</span></div>
+    <div class="pk">🔑 id</div>
+    <div>week_start</div>
+    <div>branded_search_volume</div>
+  </div>
+
+  <!-- FACTS ROW -->
+  <div class="box fact" style="left:560px; top:280px; width:400px;">
+    <div class="box-title">leads <span class="tag">факт · центр</span></div>
+    <div class="pk">🔑 id</div>
+    <div>name</div>
+    <div>source_type (enum)</div>
+    <div>created_at</div>
+    <div>deal_amount / deal_closed_at</div>
+    <div>commission_amount</div>
+    <div class="fk">↳ fk project_id, agency_id, ad_channel_id, smm_channel_id, site_id, event_id</div>
+  </div>
+
+  <div class="box fact" style="left:260px; top:460px; width:220px;">
+    <div class="box-title">lead_contacts <span class="tag">факт</span></div>
+    <div class="pk">🔑 id</div>
+    <div class="fk">↳ fk lead_id</div>
+    <div>phone</div>
+    <div>position (1–3)</div>
+    <div>is_primary</div>
+  </div>
+
+  <div class="box fact" style="left:1000px; top:280px; width:220px;">
+    <div class="box-title">lead_stage_events <span class="tag">факт</span></div>
+    <div class="pk">🔑 id</div>
+    <div class="fk">↳ fk lead_id</div>
+    <div>stage (enum)</div>
+    <div>occurred_at <span style="color:var(--text-muted);">(дата статуса)</span></div>
+  </div>
+
+  <div class="box dim" style="left:1000px; top:460px; width:220px;">
+    <div class="box-title">funnel_stage_defs <span class="tag">config</span></div>
+    <div class="pk">🔑 id</div>
+    <div>source_type (enum)</div>
+    <div>stage (enum)</div>
+    <div>stage_order</div>
+  </div>
+
+  <!-- CHANNEL METRICS ROW -->
+  <div class="box metric" style="left:60px; top:620px; width:220px;">
+    <div class="box-title">ad_daily_metrics <span class="tag">метрика</span></div>
+    <div class="pk">🔑 id</div>
+    <div class="fk">↳ fk ad_channel_id, project_id</div>
+    <div>date</div>
+    <div>impressions / spend</div>
+  </div>
+
+  <div class="box metric" style="left:560px; top:620px; width:230px;">
+    <div class="box-title">smm_daily_metrics <span class="tag">метрика</span></div>
+    <div class="pk">🔑 id</div>
+    <div class="fk">↳ fk smm_channel_id</div>
+    <div>date, publications</div>
+    <div>impressions, reach</div>
+    <div>likes, comments, shares</div>
+    <div>followers_total</div>
+  </div>
+
+  <div class="box metric" style="left:900px; top:620px; width:220px;">
+    <div class="box-title">site_daily_metrics <span class="tag">метрика</span></div>
+    <div class="pk">🔑 id</div>
+    <div class="fk">↳ fk site_id</div>
+    <div>date, impressions, views</div>
+    <div>direct/seo/referral/social</div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ================= DOCS SECTION ================= -->
+<div class="section">
+  <h2>Сущности: атрибуты и комментарии</h2>
+  <p class="lead-in">
+    Ниже — зачем нужна каждая таблица и почему у неё именно такие поля, в привязке к тому, что реально показано в отчёте.
+  </p>
+
+  <div class="group-heading"><span class="swatch" style="background:var(--dim)"></span>Измерения</div>
+
+  <div class="entity-card">
+    <h3>projects</h3>
+    <p class="why">В отчёте почти каждый блок фильтруется по проекту (вкладки «Все проекты / Ardhana / Satori / Aravita / Bloom» в разделе performance, разбивка сайтов по /ardhana/villas, /satori/residences и т.д.). Без отдельной сущности пришлось бы хранить название проекта строкой в каждой таблице — с рисками опечаток и невозможностью переименовать проект в одном месте.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">Внутренний идентификатор.</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">«Ardhana», «Satori» и т.д. — то, что видно в фильтрах дашборда.</td></tr>
+      <tr><td class="field">slug</td><td class="type">text</td><td class="comment">Машиночитаемый код для URL/путей сайтов («ardhana» → /ardhana/villas).</td></tr>
+      <tr><td class="field">status</td><td class="type">text</td><td class="comment">Активен / архивный — чтобы старые проекты (напр. Legion, который есть в сайтах, но не в остальных разрезах) не засоряли текущие фильтры.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>agencies</h3>
+    <p class="why">Раздел «Агентские продажи» — это отдельная воронка по конкретным партнёрским агентствам (EstateWin Partners, Prime Realty Group и т.д.) с их собственной таблицей регистраций/Zoom/броней/сделок. Агентство — это источник лида, но не рекламный канал и не сайт, поэтому выделено в свой справочник.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">Название агентства из таблицы отчёта.</td></tr>
+      <tr><td class="field">commission_rate</td><td class="type">numeric</td><td class="comment">В отчёте написано «для агентов расходы — это сумма выплаченных комиссий»: ставка/процент нужен, чтобы считать маркетинговые расходы и CAC по направлению «Агенты» без ручного ввода суммы на каждую сделку.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>ad_channels</h3>
+    <p class="why">Блок Performance-реклама разбит по рекламным каналам (Яндекс Директ, Google Ads, Meta/Instagram Ads, TikTok Ads) с расходами и полной воронкой Lead→QLead→Zoom→Бронь→Сделка на каждый. Это справочник рекламных площадок, независимый от проекта — один и тот же канал крутит рекламу на разные проекты.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">«Яндекс Директ», «Google Ads» и т.п.</td></tr>
+      <tr><td class="field">platform</td><td class="type">text</td><td class="comment">Тип площадки (search/social/video) — пригодится для будущей группировки, если каналов станет больше.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>smm_channels</h3>
+    <p class="why">Раздел SMM детализирован по конкретным каналам (Instagram HQC, Telegram — Ardhana, Telegram — Satori, YouTube HQC…). Часть каналов явно привязана к проекту («Telegram — Ardhana»), часть — общая для компании («Instagram HQC»), поэтому project_id — необязательное поле.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">Название канала из таблицы «Динамика по каналам».</td></tr>
+      <tr><td class="field">platform</td><td class="type">text</td><td class="comment">Instagram / Telegram / YouTube — нужно для иконок и группировки в UI.</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>project_id</td><td class="type">uuid, nullable</td><td class="comment">NULL для общих каналов бренда, заполнено для проектных Telegram-каналов.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>sites</h3>
+    <p class="why">Раздел «Сайты» построен по конкретным посадочным страницам/сайтам (/ardhana/villas, /satori/residences…), каждая обычно привязана к проекту. Но бывают и общие сайты — не про конкретный /legion/investments, а про компанию целиком (главная страница, блог) — поэтому project_id, как и у smm_channels, nullable, а не обязателен.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">path</td><td class="type">text</td><td class="comment">«/ardhana/villas» — как в таблицах «Источники» и «Конверсия».</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>project_id</td><td class="type">uuid, nullable</td><td class="comment">NULL для общих сайтов компании, заполнено для посадочных страниц конкретного проекта.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>events</h3>
+    <p class="why">Раздел «Спецактивности» — это карточки конкретных мероприятий (Webinar 18 July, Bali Property Expo, PR-публикация, партнёрская интеграция), у каждого свой бюджет, формат и разовая воронка. В отличие от каналов, событие не повторяется во времени — поэтому у него нет «метрик по дням», а есть один бюджет на всё мероприятие.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">«Bali Property Expo» и т.п.</td></tr>
+      <tr><td class="field">type</td><td class="type">enum</td><td class="comment">webinar / exhibition / pr / partnership — в отчёте это подписано под названием каждой карточки.</td></tr>
+      <tr><td class="field">format</td><td class="type">enum</td><td class="comment">online / offline.</td></tr>
+      <tr><td class="field">event_date</td><td class="type">date</td><td class="comment">Нужна для попадания события в нужную неделю/месяц/квартал при сравнении периодов.</td></tr>
+      <tr><td class="field">budget</td><td class="type">numeric</td><td class="comment">В отчёте указан явно на карточке («Бюджет $340», «$0 (бартер)») — это расход направления «Спецактивности», в отличие от рекламных каналов расход не по дням, а один на всё событие.</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>project_id</td><td class="type">uuid, nullable</td><td class="comment">В самом отчёте события не привязаны к проекту явно — оставлено nullable на будущее.</td></tr>
+    </table>
+  </div>
+
+  <div class="group-heading"><span class="swatch" style="background:var(--fact)"></span>Факты</div>
+
+  <div class="entity-card">
+    <h3>leads <span style="font-weight:400;color:var(--text-muted);font-size:12px;">— центральная таблица</span></h3>
+    <p class="why">Во всех пяти разделах отчёта по сути один и тот же объект — «лид, который где-то родился и, может быть, дошёл до сделки» — просто с разным набором применимых этапов и разным источником. Вместо пяти похожих таблиц (agent_leads, ad_leads, smm_leads…) — одна таблица с полем source_type и набором nullable внешних ключей: это позволяет считать сквозные показатели (выручка, брони, сделки, ROMI) одним запросом по всей компании, а не объединением пяти таблиц через UNION.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">name</td><td class="type">text</td><td class="comment">Имя/ФИО лида — само по себе не аналитика, а «якорь» для ручного разбора: если два канала прислали разных лидов с одним и тем же контактом, по имени + телефону из lead_contacts проще опознать, что это один и тот же человек.</td></tr>
+      <tr><td class="field">source_type</td><td class="type">enum</td><td class="comment">agent / ad / smm / site / event — определяет, какой из *_id ниже заполнен, и какая воронка применима.</td></tr>
+      <tr><td class="field">created_at</td><td class="type">timestamptz</td><td class="comment">Момент появления лида (регистрация/показ формы) — точка отсчёта для недельных/месячных/квартальных срезов.</td></tr>
+      <tr><td class="field">deal_amount</td><td class="type">numeric, nullable</td><td class="comment">Заполняется, когда лид доходит до сделки — источник показателей «Выручка» и «Средний чек».</td></tr>
+      <tr><td class="field">deal_closed_at</td><td class="type">timestamptz, nullable</td><td class="comment">Дата закрытия сделки — нужна отдельно от created_at, т.к. между лидом и сделкой может пройти несколько недель, а в отчёте это разные периоды.</td></tr>
+      <tr><td class="field">commission_amount</td><td class="type">numeric, nullable</td><td class="comment">Комиссия по сделке для агентских лидов — именно эта сумма и есть «маркетинговые расходы» направления «Агенты» в отчёте.</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>project_id</td><td class="type">uuid, nullable</td><td class="comment">Проект, к которому относится лид — нужен для фильтров «Все проекты / Ardhana / Satori…».</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>agency_id / ad_channel_id / smm_channel_id / site_id / event_id</td><td class="type">uuid, nullable</td><td class="comment">Ровно одно из пяти полей заполнено — соответствует source_type. Проверяется CHECK-constraint'ом в БД, чтобы нельзя было записать лид без источника или с двумя источниками сразу.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>lead_contacts</h3>
+    <p class="why">Контакт — это «от 1 до 3 на лида», то есть связь один-ко-многим, а не одно значение — поэтому это отдельная таблица, а не поля phone_1/phone_2/phone_3 в leads. Три текстовых поля в leads работали бы только для ровно трёх контактов и плохо бы искались (запрос «найди лида по этому телефону» превращается в OR по трём колонкам вместо одного условия). Отдельная таблица даёт ровно то, что нужно — «если что, распутать информацию»: по номеру телефона можно найти все лиды, где он встречался, даже в разных каналах.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>lead_id</td><td class="type">uuid</td><td class="comment">Чей это контакт.</td></tr>
+      <tr><td class="field">phone</td><td class="type">text</td><td class="comment">Номер телефона в нормализованной форме (E.164) — чтобы «+62...» и «62...» не считались разными контактами при поиске совпадений.</td></tr>
+      <tr><td class="field">position</td><td class="type">smallint (1–3)</td><td class="comment">Порядок ввода — какой контакт первый/второй/третий, если понадобится показать их в исходном порядке. Ограничение «от 1 до 3» проверяется на уровне приложения (1 контакт обязателен при создании лида, 4-й вставить нельзя).</td></tr>
+      <tr><td class="field">is_primary</td><td class="type">boolean</td><td class="comment">Какой из 1–3 контактов основной — именно по нему будут звонить/писать по умолчанию.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>lead_stage_events</h3>
+    <p class="why">Разные каналы имеют разные воронки (агенты: Регистрация→Zoom→Бронь→Сделка; performance и сайты: Показ→Lead→QLead→Zoom→Бронь→Сделка; SMM: Лид→Бронь→Сделка; спецактивности: Регистрация/Охват→Посещение→Лид→SQL→Zoom→Бронь→Сделка). Без CRM у нас нет надёжного точного времени перехода между этапами — есть только периодические ручные отметки «на эту дату лид дошёл досюда». Поэтому occurred_at трактуется как дата фиксации статуса, а не момент события, и по нему нельзя мерить скорость прохождения этапа, только раскладывать лида по неделям/месяцам/кварталам.</p>
+    <p class="why" style="margin-top:-8px;">Ключевое правило — бэкофилл на уровне скрипта записи, не БД-constraint: когда лида отмечают на этапе X, скрипт по <code>funnel_stage_defs</code> находит все более ранние этапы этой воронки и, если строк для них ещё нет, создаёт их той же датой. Это убирает главную дыру ручного ввода — «нет строки» раньше могло значить и «не дошёл», и «просто забыли отметить»; после бэкофилла «нет строки» значит только «не дошёл». Текущий статус лида отдельно нигде не хранится — это <code>MAX(stage_order)</code> по его строкам здесь, что снимает риск разъехаться с логом.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>lead_id</td><td class="type">uuid</td><td class="comment">Ссылка на лид, чья воронка фиксируется.</td></tr>
+      <tr><td class="field">stage</td><td class="type">enum</td><td class="comment">registered / attended / lead / sql / zoom / booking / deal — суперсет этапов из всех пяти воронок отчёта; какие именно применимы к source_type — см. funnel_stage_defs.</td></tr>
+      <tr><td class="field">occurred_at</td><td class="type">date</td><td class="comment">Дата, на которую известно, что лид достиг этого этапа (не точный timestamp перехода) — используется только для попадания в нужный период сравнения.</td></tr>
+    </table>
+  </div>
+
+  <div class="group-heading"><span class="swatch" style="background:var(--dim)"></span>Конфигурация</div>
+
+  <div class="entity-card">
+    <h3>funnel_stage_defs</h3>
+    <p class="why">Скрипту бэкофилла и любому SQL-запросу нужно знать порядок этапов на канал, чтобы понимать, какие статусы считать «автоматически пройденными» при отметке нового этапа, и как правильно упорядочить прогресс каждой воронки. Если держать этот порядок только в коде, при изменении воронки (например, у SMM появится промежуточный этап) придётся искать и синхронно править логику в нескольких местах. Таблица — единственный источник правды для 4 воронок из отчёта: агенты, performance/сайты, SMM, спецактивности.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">source_type</td><td class="type">enum</td><td class="comment">agent / ad / smm / site / event — та же воронка, что применяется к leads.source_type.</td></tr>
+      <tr><td class="field">stage</td><td class="type">enum</td><td class="comment">Один из этапов суперсета (registered / attended / lead / sql / zoom / booking / deal), применимый именно к этому source_type.</td></tr>
+      <tr><td class="field">stage_order</td><td class="type">integer</td><td class="comment">Порядковый номер этапа внутри воронки этого source_type — по нему скрипт бэкофилла определяет «что считать пройденным раньше», а запросы — «текущий статус» как MAX(stage_order) для лида.</td></tr>
+    </table>
+  </div>
+
+  <div class="group-heading"><span class="swatch" style="background:var(--metric)"></span>Метрики каналов (по дням)</div>
+
+  <div class="entity-card">
+    <h3>ad_daily_metrics</h3>
+    <p class="why">Расход и показы в рекламе не привязаны к конкретному лиду — они существуют у канала целиком за день, даже если в этот день не было ни одного лида. Поэтому это отдельная таблица «канал × проект × день», а не поле в leads. Именно из неё считаются CPL/CPQL/CPZ/CAC — сумма spend делится на количество leads/лидов на соответствующем этапе из lead_stage_events.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>ad_channel_id</td><td class="type">uuid</td><td class="comment">Какой канал (Яндекс Директ, Google Ads…).</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>project_id</td><td class="type">uuid, nullable</td><td class="comment">В отчёте расходы разбиты и «по рекламным каналам», и «по проектам» — эта пара ключей позволяет строить оба разреза.</td></tr>
+      <tr><td class="field">date</td><td class="type">date</td><td class="comment">День, к которому относится показатель — основа для сравнения неделя/месяц/квартал.</td></tr>
+      <tr><td class="field">impressions</td><td class="type">integer</td><td class="comment">«Показы» — источник для показателя «Показы: 980 000» в блоке «Присутствие бренда».</td></tr>
+      <tr><td class="field">spend</td><td class="type">numeric</td><td class="comment">Расход за день — источник «Маркетинговых расходов» направления Performance.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>smm_daily_metrics</h3>
+    <p class="why">Грейн — «канал × день». <code>publications</code> — это именно кол-во постов, вышедших в этот день (день записи = день публикации), а не постоянная величина. Формально показы/охват/лайки — это свойства конкретного поста, а не дня; честнее всего было бы завести отдельную таблицу «публикации» и уже её агрегировать по дням. Но раз это лишняя сущность, которую вручную вести не хочется, — берём компромисс: <code>impressions</code>, <code>reach</code>, <code>likes/comments/shares</code> — это сумма по всем постам, вышедшим или проявившим активность в этот день (то, что реально отдаёт большинство соцсетей за период), без хранения каждого поста отдельно.</p>
+    <p class="why" style="margin-top:-8px;">Показы (impressions) есть почти у всех площадок, а вот охват (reach) как отдельная метрика — не везде, поэтому reach nullable, а impressions — нет. followers_total — это снимок «сколько подписчиков сейчас», а не дельта: дельта на самом деле не первичные данные, а разница между сегодняшним и вчерашним снимком, и хранить её отдельно означало бы дублировать одну и ту же информацию в двух местах с риском разъехаться — прирост считается как <code>followers_total(t) − followers_total(t−1)</code> в запросе. По той же причине ER не хранится: это <code>(likes + comments + shares) / reach</code> (или / followers_total — выбор формулы за вами), посчитанный на лету, а не отдельное поле, которое легко рассинхронизировать с сырыми лайками/комментариями/репостами.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>smm_channel_id</td><td class="type">uuid</td><td class="comment">Какой канал.</td></tr>
+      <tr><td class="field">date</td><td class="type">date</td><td class="comment">День, за который агрегированы метрики.</td></tr>
+      <tr><td class="field">publications</td><td class="type">integer</td><td class="comment">Кол-во постов, вышедших в этот день — колонка «Публикации».</td></tr>
+      <tr><td class="field">impressions</td><td class="type">integer</td><td class="comment">Показы за день — сумма по постам/каналу, обычно есть на всех площадках.</td></tr>
+      <tr><td class="field">reach</td><td class="type">integer, nullable</td><td class="comment">Охват за день — колонка «Охват»; NULL там, где площадка не отдаёт охват отдельно от показов (не в каждой соцсети есть).</td></tr>
+      <tr><td class="field">likes / comments / shares</td><td class="type">integer</td><td class="comment">Сырые счётчики вовлечённости за день — из них по формуле считается ER, а не наоборот.</td></tr>
+      <tr><td class="field">followers_total</td><td class="type">integer</td><td class="comment">Общее число подписчиков на конец этого дня (снимок, не дельта) — прирост «Подписчики +180» из отчёта считается разницей снимков между датами.</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>site_daily_metrics</h3>
+    <p class="why">Раздел «Сайты» показывает и трафик по источникам (прямые/SEO/рефералы/соцсети), и воронку (показы→lead→qlead→zoom). Обе таблицы отчёта — это один и тот же сайт в один и тот же день, поэтому объединены в одну запись, а не разнесены на два FK-набора.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field"><span class="badge fk">FK</span>site_id</td><td class="type">uuid</td><td class="comment">Какая страница/сайт.</td></tr>
+      <tr><td class="field">date</td><td class="type">date</td><td class="comment">День.</td></tr>
+      <tr><td class="field">impressions</td><td class="type">integer</td><td class="comment">Колонка «Показы» в таблице конверсии сайта.</td></tr>
+      <tr><td class="field">views</td><td class="type">integer</td><td class="comment">«Просмотры» страницы сайта.</td></tr>
+      <tr><td class="field">traffic_direct / traffic_seo / traffic_referral / traffic_social</td><td class="type">integer</td><td class="comment">Ровно те 4 колонки, что в таблице «Источники» — нужны отдельно, т.к. «Брендовый поисковый спрос» в шапке отчёта считается именно по SEO/прямым заходам сайта.</td></tr>
+    </table>
+  </div>
+
+  <div class="group-heading"><span class="swatch" style="background:var(--plan)"></span>Планирование</div>
+
+  <div class="entity-card">
+    <h3>sales_plans</h3>
+    <p class="why">«Выполнение плана продаж: 85%, +5 п.п.» в отчёте — план один на компанию, а не на канал (сноска в отчёте: «Общий план — один на компанию»). Поэтому это не поле у leads/проекта, а отдельная таблица с периодом — план может меняться от квартала к кварталу.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">period_type</td><td class="type">enum</td><td class="comment">week / month / quarter — под переключатель сравнения в шапке отчёта.</td></tr>
+      <tr><td class="field">period_start / period_end</td><td class="type">date</td><td class="comment">Границы периода, на который поставлен план.</td></tr>
+      <tr><td class="field">plan_amount</td><td class="type">numeric</td><td class="comment">Целевая выручка компании за период — знаменатель для «% выполнения плана».</td></tr>
+    </table>
+  </div>
+
+  <div class="entity-card">
+    <h3>brand_metrics</h3>
+    <p class="why">«Брендовый поисковый спрос: 2 300, +18%» — единственный показатель отчёта, который не выводится напрямую из событий или ad-метрик (это внешние данные поисковых систем/Wordstat/GSC на уровень бренда, а не канала). Пока нет автоматического источника — заносится вручную, и такие инструменты обычно отдают данные понедельно, а не подневно — поэтому грейн здесь неделя, а не день, как у остальных метрик. Месяц/квартал в отчёте — это сумма/среднее по недельным значениям, попавшим в период.</p>
+    <table>
+      <tr><th>Поле</th><th>Тип</th><th>Комментарий</th></tr>
+      <tr><td class="field"><span class="badge pk">PK</span>id</td><td class="type">uuid</td><td class="comment">—</td></tr>
+      <tr><td class="field">week_start</td><td class="type">date</td><td class="comment">Понедельник недели, за которую сделан замер — по нему значения группируются в месяц/квартал.</td></tr>
+      <tr><td class="field">branded_search_volume</td><td class="type">integer</td><td class="comment">Объём брендовых запросов за эту неделю — как подписано в отчёте, просто на недельной, а не месячной сетке.</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  function fitCanvas(){
+    var wrap = document.querySelector('.canvas-scale-wrap');
+    var canvas = document.querySelector('.canvas');
+    if(!wrap || !canvas) return;
+    var scale = wrap.clientWidth / 1560;
+    if(scale > 1) scale = 1; // не увеличиваем на широких экранах
+    canvas.style.transform = 'scale(' + scale + ')';
+    wrap.style.height = (800 * scale) + 'px';
+  }
+  window.addEventListener('resize', fitCanvas);
+  window.addEventListener('load', fitCanvas);
+  fitCanvas();
+</script>
+</body>
+</html>
