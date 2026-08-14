@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>План автоматизации маркетинговых отчётов</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #F7F6F2;
+    color: #2C2C2A;
+    margin: 0;
+    padding: 32px 16px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  h2 { font-size: 19px; font-weight: 600; margin: 32px 0 4px; }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0 12px; font-size: 13px; color: #5F5E5A; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+  .chart-scroll { overflow-x: auto; background: #fff; border: 1px solid #E4E2DA; border-radius: 12px; padding: 16px 16px 20px; }
+  .gantt {
+    display: grid;
+    grid-template-columns: 300px repeat(50, 9px);
+    grid-template-rows: repeat(30, auto);
+    min-width: 750px;
+    position: relative;
+  }
+  .wk { font-size: 10px; color: #888780; white-space: nowrap; align-self: end; padding-bottom: 4px; }
+  .weekend { background: rgba(0,0,0,0.035); }
+  .gridline { background: rgba(0,0,0,0.12); }
+  .head {
+    font-size: 13.5px; font-weight: 600; padding: 14px 0 6px; grid-column: 1 / -1;
+  }
+  .lbl {
+    font-size: 12.5px; color: #444441; padding: 5px 12px 5px 0; align-self: center;
+    white-space: normal; line-height: 1.3;
+  }
+  .bar { height: 14px; border-radius: 4px; align-self: center; }
+  .stage-card { background: #fff; border: 1px solid #E4E2DA; border-radius: 12px; padding: 18px 24px; margin-bottom: 16px; }
+  .stage-card h3 { margin: 0 0 4px; font-size: 16px; }
+  .stage-card .price { color: #888780; font-size: 13px; margin-bottom: 12px; }
+  .stage-card ul { margin: 0; padding-left: 20px; font-size: 14.5px; }
+  .stage-card li { margin-bottom: 6px; }
+  .stage-card li.new { background: #FAEEDA; margin: 0 -8px 6px; padding: 4px 8px; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #E4E2DA; border-radius: 12px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #E4E2DA; }
+  th { background: #F1EFE8; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .note { font-size: 12.5px; color: #888780; margin-top: 10px; }
+  .footer { font-size: 12.5px; color: #888780; margin-top: 32px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Автоматизация маркетинговых отчётов — план работ</h1>
+<div class="note" style="margin-top:6px;">Этап 1 (проектирование отчёта и структуры данных) уже пройден. План ниже — с этапа 2, старт 14 августа.</div>
+
+<h2>График по дням</h2>
+<div class="legend">
+  <span><span class="dot" style="background:#0F6E56;"></span>Этап 2 · рабочая версия системы</span>
+  <span><span class="dot" style="background:#534AB7;"></span>Этап 3 · автоматизация сбора данных</span>
+  <span><span class="dot" style="background:#993C1D;"></span>Этап 4 · постоянный дашборд</span>
+  <span><span class="dot" style="background:#5F5E5A;"></span>Сдача этапа + оплата</span>
+  <span><span class="dot" style="background:#FAEEDA;border:1px solid #EF9F27;"></span>Новая задача</span>
+</div>
+
+<div class="chart-scroll">
+<div class="gantt">
+
+<!-- weekend shading -->
+<div class="weekend" style="grid-column:3/4;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:4/5;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:10/11;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:11/12;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:17/18;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:18/19;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:24/25;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:25/26;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:31/32;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:32/33;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:38/39;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:39/40;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:45/46;grid-row:1/31;"></div>
+<div class="weekend" style="grid-column:46/47;grid-row:1/31;"></div>
+
+<!-- week gridlines (Mondays) -->
+<div class="gridline" style="grid-column:5/6;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:12/13;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:19/20;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:26/27;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:33/34;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:40/41;grid-row:1/31;width:1px;"></div>
+<div class="gridline" style="grid-column:47/48;grid-row:1/31;width:1px;"></div>
+
+<!-- header: метка на каждое начало недели, а не диапазон, чтобы подписи не сталкивались -->
+<div class="wk" style="grid-row:1;grid-column:2/3;">14.08</div>
+<div class="wk" style="grid-row:1;grid-column:5/6;">17.08</div>
+<div class="wk" style="grid-row:1;grid-column:12/13;">24.08</div>
+<div class="wk" style="grid-row:1;grid-column:19/20;">31.08</div>
+<div class="wk" style="grid-row:1;grid-column:26/27;">07.09</div>
+<div class="wk" style="grid-row:1;grid-column:33/34;">14.09</div>
+<div class="wk" style="grid-row:1;grid-column:40/41;">21.09</div>
+<div class="wk" style="grid-row:1;grid-column:47/48;">28.09</div>
+
+<!-- STAGE 2 -->
+<div class="head" style="grid-row:2;color:#0F6E56;">Этап 2 · рабочая версия системы</div>
+
+<div class="lbl" style="grid-row:3;grid-column:1;">Создаём базу данных для отчёта</div>
+<div class="bar" style="grid-row:3;grid-column:2/7;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:4;grid-column:1;background:#FAEEDA;border-radius:4px;">Собираем вводные и доступы от клиента</div>
+<div class="bar" style="grid-row:4;grid-column:7/10;background:#EF9F27;"></div>
+
+<div class="lbl" style="grid-row:5;grid-column:1;">Настраиваем автозаполнение истории и доступы</div>
+<div class="bar" style="grid-row:5;grid-column:12/14;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:6;grid-column:1;">Настраиваем расчёт показателей отчёта</div>
+<div class="bar" style="grid-row:6;grid-column:14/16;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:7;grid-column:1;">Создаём Telegram-бота</div>
+<div class="bar" style="grid-row:7;grid-column:2/3;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:8;grid-column:1;">Настраиваем распознавание пользователей</div>
+<div class="bar" style="grid-row:8;grid-column:5/6;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:9;grid-column:1;">Подключаем ИИ-помощника к боту</div>
+<div class="bar" style="grid-row:9;grid-column:6/8;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:10;grid-column:1;">Учим бота принимать данные вручную</div>
+<div class="bar" style="grid-row:10;grid-column:16/20;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:11;grid-column:1;">Учим бота присылать отчёт по запросу</div>
+<div class="bar" style="grid-row:11;grid-column:20/22;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:12;grid-column:1;">Проверяем всё на реальных данных</div>
+<div class="bar" style="grid-row:12;grid-column:22/23;background:#0F6E56;"></div>
+
+<div class="lbl" style="grid-row:13;grid-column:1;">Сдача этапа + оплата</div>
+<div class="bar" style="grid-row:13;grid-column:23/27;background:#5F5E5A;"></div>
+
+<!-- STAGE 3 -->
+<div class="head" style="grid-row:14;color:#534AB7;">Этап 3 · автоматизация сбора данных</div>
+
+<div class="lbl" style="grid-row:15;grid-column:1;">Автосбор из Яндекс.Директа и Google Ads</div>
+<div class="bar" style="grid-row:15;grid-column:27/30;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:16;grid-column:1;">Автосбор из Instagram/Meta и TikTok</div>
+<div class="bar" style="grid-row:16;grid-column:30/34;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:17;grid-column:1;">Автосбор из соцсетей</div>
+<div class="bar" style="grid-row:17;grid-column:27/30;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:18;grid-column:1;">Автосбор с сайтов</div>
+<div class="bar" style="grid-row:18;grid-column:30/34;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:19;grid-column:1;">Настраиваем автообновление по расписанию</div>
+<div class="bar" style="grid-row:19;grid-column:34/35;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:20;grid-column:1;">Настраиваем уведомления о сбоях</div>
+<div class="bar" style="grid-row:20;grid-column:35/36;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:21;grid-column:1;">Сверяем данные, убираем лишний ручной ввод</div>
+<div class="bar" style="grid-row:21;grid-column:36/38;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:22;grid-column:1;">Финальная проверка всей системы</div>
+<div class="bar" style="grid-row:22;grid-column:40/41;background:#534AB7;"></div>
+
+<div class="lbl" style="grid-row:23;grid-column:1;">Сдача этапа + оплата</div>
+<div class="bar" style="grid-row:23;grid-column:41/43;background:#5F5E5A;"></div>
+
+<!-- STAGE 4 -->
+<div class="head" style="grid-row:24;color:#993C1D;">Этап 4 · постоянный дашборд</div>
+
+<div class="lbl" style="grid-row:25;grid-column:1;">Выбираем, как будет выглядеть дашборд</div>
+<div class="bar" style="grid-row:25;grid-column:43/44;background:#993C1D;"></div>
+
+<div class="lbl" style="grid-row:26;grid-column:1;">Подключаем дашборд к базе данных и фильтрам</div>
+<div class="bar" style="grid-row:26;grid-column:44/45;background:#993C1D;"></div>
+
+<div class="lbl" style="grid-row:27;grid-column:1;">Оформляем все разделы отчёта на дашборде</div>
+<div class="bar" style="grid-row:27;grid-column:47/48;background:#993C1D;"></div>
+
+<div class="lbl" style="grid-row:28;grid-column:1;">Настраиваем доступы и запускаем дашборд</div>
+<div class="bar" style="grid-row:28;grid-column:48/49;background:#993C1D;"></div>
+
+<div class="lbl" style="grid-row:29;grid-column:1;">Проверяем и принимаем дашборд</div>
+<div class="bar" style="grid-row:29;grid-column:49/50;background:#993C1D;"></div>
+
+<div class="lbl" style="grid-row:30;grid-column:1;">Сдача этапа + оплата</div>
+<div class="bar" style="grid-row:30;grid-column:50/52;background:#5F5E5A;"></div>
+
+</div>
+</div>
+<div class="note">Полосы серого цвета в конце — вертикальная линия отмечает начало каждой недели, светлые столбцы — выходные, чтобы легче было соотнести задачу с датой.</div>
+
+<h2>Что входит в каждый этап — простыми словами</h2>
+
+<div class="stage-card">
+<h3>Этап 2. Рабочая версия системы</h3>
+<div class="price">$1000 · 2–3 недели</div>
+<ul>
+  <li>Создаём базу данных, где будут храниться все данные отчёта</li>
+  <li class="new">Собираем у клиента доступы к рекламным кабинетам и другим источникам, либо сами цифры — без этого дальше работаем только на тестовых данных</li>
+  <li>Настраиваем логику, чтобы данные записывались корректно и без дублей, и права доступа к базе</li>
+  <li>Настраиваем расчёт всех показателей отчёта (выручка, брони, сделки, ROMI и другие)</li>
+  <li>Создаём Telegram-бота и учим его узнавать пользователей</li>
+  <li>Подключаем к боту ИИ-помощника (Claude), чтобы с ним можно было общаться обычным языком</li>
+  <li>Учим бота принимать данные, которые присылают вручную, приводить их в порядок и сохранять</li>
+  <li>Учим бота присылать готовый отчёт по запросу в чате</li>
+  <li>Проверяем всё на реальных данных</li>
+</ul>
+</div>
+
+<div class="stage-card">
+<h3>Этап 3. Автоматизация сбора данных</h3>
+<div class="price">от $1000 · 2–4 недели</div>
+<ul>
+  <li>Подключаем автоматическую загрузку данных из рекламных кабинетов (Яндекс.Директ, Google Ads, Instagram/Meta, TikTok)</li>
+  <li>Подключаем автоматическую загрузку данных из соцсетей и с сайтов</li>
+  <li>Настраиваем, чтобы данные обновлялись сами по расписанию, без участия человека</li>
+  <li>Настраиваем уведомления, если где-то загрузка не сработала</li>
+  <li>Сверяем автоматические данные с теми, что вводили вручную, и убираем ручной ввод там, где он больше не нужен</li>
+  <li>Проверяем всю систему целиком</li>
+</ul>
+</div>
+
+<div class="stage-card">
+<h3>Этап 4. Постоянный дашборд</h3>
+<div class="price">от $700 · 1–2 недели</div>
+<ul>
+  <li>Выбираем, как и где будет отображаться дашборд</li>
+  <li>Подключаем его к базе данных, настраиваем фильтры по периодам и проектам</li>
+  <li>Оформляем все разделы отчёта в виде наглядных экранов</li>
+  <li>Настраиваем, кто из пользователей что видит, и запускаем дашборд</li>
+  <li>Проверяем и принимаем готовый результат</li>
+</ul>
+</div>
+
+<h2>Сроки сдачи и оплаты</h2>
+<table>
+<tr><th>Этап</th><th>Работы</th><th>Сдача (2 раб. дня)</th><th>Оплата не позднее</th></tr>
+<tr><td>2. Рабочая версия системы</td><td>14.08 – 03.09</td><td>04.09 – 07.09</td><td>07.09</td></tr>
+<tr><td>3. Автоматизация сбора данных</td><td>08.09 – 21.09</td><td>22.09 – 23.09</td><td>23.09</td></tr>
+<tr><td>4. Постоянный дашборд</td><td>24.09 – 30.09</td><td>01.10 – 02.10</td><td>02.10</td></tr>
+</table>
+<div class="note">Это реалистичный план с учётом сбора доступов у клиента. Каждый следующий этап стартует только после сдачи и оплаты предыдущего. Если интеграции в этапе 3 займут больше времени или клиент будет медленно отвечать — даты сдвинутся дальше.</div>
+
+<div class="footer">Обновлено 14 августа 2026</div>
+
+</div>
+</body>
+</html>
